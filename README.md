@@ -1,6 +1,6 @@
-# WhatsApp Calendar Agent
+# agente01.github.io
 
-Implementacion propia en Node.js para recibir mensajes de WhatsApp, interpretar pedidos simples y conectarse con Google Calendar.
+Agente propio en Node.js para recibir mensajes de WhatsApp, interpretar pedidos simples y conectarse con Google Calendar.
 
 ## Que hace
 
@@ -68,6 +68,13 @@ WhatsApp necesita una URL HTTPS publica. Para desarrollo puedes usar un tunel co
 ```text
 https://tu-url-publica/webhook/whatsapp
 ```
+
+## GitHub Pages
+
+El repositorio tambien conserva los archivos web existentes:
+
+- `index.html`
+- `privado.html`
 
 ## Notas importantes
 
