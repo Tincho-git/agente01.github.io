@@ -72,10 +72,14 @@ async function handleWhatsAppWebhook(request, response) {
       await whatsapp.sendText(message.from, reply);
     } catch (error) {
       console.error('Failed to process WhatsApp message', error);
-      await whatsapp.sendText(
-        message.from,
-        'Tuve un problema procesando el pedido. Revisa la configuracion del agente o intenta de nuevo.'
-      );
+      try {
+        await whatsapp.sendText(
+          message.from,
+          'Tuve un problema procesando el pedido. Revisa la configuracion del agente o intenta de nuevo.'
+        );
+      } catch (sendError) {
+        console.error('Failed to send WhatsApp error reply', sendError);
+      }
     }
   }
 }
