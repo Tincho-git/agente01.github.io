@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: agente01-whatsapp-calendar
+    runtime: node
+    repo: https://github.com/Tincho-git/agente01.github.io
+    branch: main
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_GRAPH_API_VERSION
+        value: v23.0
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REFRESH_TOKEN
+        sync: false
+      - key: GOOGLE_CALENDAR_ID
+        value: primary
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: DEFAULT_TIMEZONE
+        value: America/Argentina/Buenos_Aires
+      - key: BUSINESS_NAME
+        value: Mi asistente

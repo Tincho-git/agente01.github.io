@@ -69,6 +69,48 @@ WhatsApp necesita una URL HTTPS publica. Para desarrollo puedes usar un tunel co
 https://tu-url-publica/webhook/whatsapp
 ```
 
+## Despliegue en Render
+
+Render despliega este proyecto como Web Service Node.js y proporciona una URL HTTPS publica. El archivo `render.yaml` ya define:
+
+- runtime: `node`
+- build command: `npm install`
+- start command: `npm start`
+- health check: `/health`
+
+En Render, crea un Blueprint o Web Service desde este repositorio:
+
+```text
+https://github.com/Tincho-git/agente01.github.io
+```
+
+Variables que debes cargar en Render:
+
+```env
+WHATSAPP_VERIFY_TOKEN=admin123
+WHATSAPP_ACCESS_TOKEN=tu-token-de-meta
+WHATSAPP_PHONE_NUMBER_ID=tu-phone-number-id
+WHATSAPP_GRAPH_API_VERSION=v23.0
+GOOGLE_CLIENT_ID=tu-client-id
+GOOGLE_CLIENT_SECRET=tu-client-secret
+GOOGLE_REFRESH_TOKEN=tu-refresh-token
+GOOGLE_CALENDAR_ID=primary
+GOOGLE_REDIRECT_URI=tu-redirect-uri-configurado-en-google
+DEFAULT_TIMEZONE=America/Argentina/Buenos_Aires
+BUSINESS_NAME=Mi asistente
+```
+
+No subas `.env` a GitHub. En local usas `.env`; en Render cargas esas mismas claves desde el panel de Environment.
+
+Cuando Render termine el deploy, usa la URL publica para configurar el webhook de Meta:
+
+```text
+Callback URL: https://tu-servicio.onrender.com/webhook/whatsapp
+Verify token: admin123
+```
+
+Tambien verifica que el campo `messages` este suscripto en los webhooks de WhatsApp.
+
 ## GitHub Pages
 
 El repositorio tambien conserva los archivos web existentes:
