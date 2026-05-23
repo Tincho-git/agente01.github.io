@@ -1,0 +1,104 @@
+import http from 'node:http';
+import { URL } from 'node:url';
+import { config } from './config.js';
+import { CalendarAgent } from './agent.js';
+import { GoogleCalendarClient } from './googleCalendar.js';
+import { WhatsAppClient, extractMessagesFromWebhook } from './whatsapp.js';
+
+const calendar = new GoogleCalendarClient(config.google);
+const whatsapp = new WhatsAppClient(config.whatsapp);
+const agent = new CalendarAgent({
+  calendar,
+  timezone: config.agent.timezone,
+  businessName: config.agent.businessName
+});
+
+const server = http.createServer(async (request, response) => {
+  try {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+
+    if (request.method === 'GET' && url.pathname === '/health') {
+      return sendJson(response, 200, { ok: true });
+    }
+
+    if (request.method === 'GET' && url.pathname === '/webhook/whatsapp') {
+      return verifyWhatsAppWebhook(url, response);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/webhook/whatsapp') {
+      return handleWhatsAppWebhook(request, response);
+    }
+
+    sendJson(response, 404, { error: 'Not found' });
+  } catch (error) {
+    console.error(error);
+    sendJson(response, 500, { error: 'Internal server error' });
+  }
+});
+
+server.listen(config.port, () => {
+  console.log(`WhatsApp Calendar Agent listening on http://localhost:${config.port}`);
+});
+
+function verifyWhatsAppWebhook(url, response) {
+  const mode = url.searchParams.get('hub.mode');
+  const token = url.searchParams.get('hub.verify_token');
+  const challenge = url.searchParams.get('hub.challenge');
+
+  if (mode === 'subscribe' && token === config.whatsapp.verifyToken && challenge) {
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.end(challenge);
+    return;
+  }
+
+  sendJson(response, 403, { error: 'Webhook verification failed' });
+}
+
+async function handleWhatsAppWebhook(request, response) {
+  const payload = await readJson(request);
+  const messages = extractMessagesFromWebhook(payload);
+
+  sendJson(response, 200, { received: true });
+
+  for (const message of messages) {
+    try {
+      const reply = message.unsupportedType
+        ? `Recibi un ${message.unsupportedType}, pero por ahora solo entiendo texto.`
+        : await agent.handleMessage(message.text);
+
+      await whatsapp.sendText(message.from, reply);
+    } catch (error) {
+      console.error('Failed to process WhatsApp message', error);
+      await whatsapp.sendText(
+        message.from,
+        'Tuve un problema procesando el pedido. Revisa la configuracion del agente o intenta de nuevo.'
+      );
+    }
+  }
+}
+
+function readJson(request) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 1_000_000) {
+        request.destroy();
+        reject(new Error('Request body too large'));
+      }
+    });
+    request.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (error) {
+        reject(error);
+      }
+    });
+    request.on('error', reject);
+  });
+}
+
+function sendJson(response, statusCode, body) {
+  response.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  response.end(JSON.stringify(body));
+}

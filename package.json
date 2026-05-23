@@ -1,0 +1,15 @@
+{
+  "name": "whatsapp-calendar-agent",
+  "version": "1.0.0",
+  "description": "Agente propio para WhatsApp Cloud API y Google Calendar.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "google:auth-url": "node src/googleAuth.js url",
+    "google:exchange-code": "node src/googleAuth.js exchange",
+    "check": "node --check src/server.js && node --check src/agent.js && node --check src/config.js && node --check src/googleCalendar.js && node --check src/whatsapp.js && node --check src/googleAuth.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
