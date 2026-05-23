@@ -3,7 +3,7 @@ import { URL } from 'node:url';
 import { config } from './config.js';
 import { CalendarAgent } from './agent.js';
 import { GoogleCalendarClient } from './googleCalendar.js';
-import { WhatsAppClient, extractMessagesFromWebhook } from './whatsapp.js';
+import { WhatsAppClient, extractMessagesFromWebhook, extractStatusesFromWebhook } from './whatsapp.js';
 
 const calendar = new GoogleCalendarClient(config.google);
 const whatsapp = new WhatsAppClient(config.whatsapp);
@@ -57,6 +57,9 @@ function verifyWhatsAppWebhook(url, response) {
 async function handleWhatsAppWebhook(request, response) {
   const payload = await readJson(request);
   const messages = extractMessagesFromWebhook(payload);
+  const statuses = extractStatusesFromWebhook(payload);
+
+  logWhatsAppWebhook({ messages, statuses });
 
   sendJson(response, 200, { received: true });
 
@@ -74,6 +77,28 @@ async function handleWhatsAppWebhook(request, response) {
         'Tuve un problema procesando el pedido. Revisa la configuracion del agente o intenta de nuevo.'
       );
     }
+  }
+}
+
+function logWhatsAppWebhook({ messages, statuses }) {
+  if (messages.length === 0 && statuses.length === 0) {
+    console.log('WhatsApp webhook received without messages or statuses');
+    return;
+  }
+
+  for (const message of messages) {
+    console.log(`WhatsApp message received from ${message.from}: ${message.text || message.unsupportedType}`);
+  }
+
+  for (const status of statuses) {
+    const errorSummary = status.errors
+      .map((error) => `${error.code} ${error.title || error.message || 'Unknown error'}`)
+      .join('; ');
+
+    console.log(
+      `WhatsApp status ${status.status} for ${status.recipientId || 'unknown recipient'}`
+      + (errorSummary ? ` errors: ${errorSummary}` : '')
+    );
   }
 }
 

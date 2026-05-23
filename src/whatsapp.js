@@ -63,3 +63,23 @@ export function extractMessagesFromWebhook(payload) {
 
   return messages;
 }
+
+export function extractStatusesFromWebhook(payload) {
+  const statuses = [];
+
+  for (const entry of payload.entry || []) {
+    for (const change of entry.changes || []) {
+      const value = change.value || {};
+      for (const status of value.statuses || []) {
+        statuses.push({
+          id: status.id,
+          status: status.status,
+          recipientId: status.recipient_id,
+          errors: status.errors || []
+        });
+      }
+    }
+  }
+
+  return statuses;
+}
