@@ -38,6 +38,11 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(config.port, () => {
   console.log(`WhatsApp Calendar Agent listening on http://localhost:${config.port}`);
+  console.log(
+    `WhatsApp config phoneNumberId=${config.whatsapp.phoneNumberId} `
+    + `graphApiVersion=${config.whatsapp.graphApiVersion} `
+    + `token=${maskToken(config.whatsapp.accessToken)}`
+  );
 });
 
 function verifyWhatsAppWebhook(url, response) {
@@ -130,4 +135,12 @@ function readJson(request) {
 function sendJson(response, statusCode, body) {
   response.writeHead(statusCode, { 'Content-Type': 'application/json' });
   response.end(JSON.stringify(body));
+}
+
+function maskToken(token) {
+  if (!token || token.length < 12) {
+    return 'not-set';
+  }
+
+  return `${token.slice(0, 6)}...${token.slice(-4)} length=${token.length}`;
 }
