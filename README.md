@@ -69,6 +69,34 @@ WhatsApp necesita una URL HTTPS publica. Para desarrollo puedes usar un tunel co
 https://tu-url-publica/webhook/whatsapp
 ```
 
+## WhatsApp con Twilio
+
+Tambien puedes usar Twilio en lugar de Meta Cloud API. Para Twilio, configura el webhook de mensajes entrantes con:
+
+```text
+https://agente01-github-io.onrender.com/webhook/twilio/whatsapp
+```
+
+En Twilio Sandbox for WhatsApp, pega esa URL en:
+
+```text
+When a message comes in
+```
+
+Metodo:
+
+```text
+POST
+```
+
+El endpoint de Twilio recibe `From` y `Body`, procesa el mensaje con el mismo agente de Calendar y responde con TwiML:
+
+```xml
+<Response><Message>...</Message></Response>
+```
+
+Para probar el sandbox, primero une tu WhatsApp al sandbox enviando el codigo `join ...` que Twilio muestra en la consola.
+
 ## Despliegue en Render
 
 Render despliega este proyecto como Web Service Node.js y proporciona una URL HTTPS publica. El archivo `render.yaml` ya define:
@@ -101,6 +129,8 @@ BUSINESS_NAME=Mi asistente
 ```
 
 No subas `.env` a GitHub. En local usas `.env`; en Render cargas esas mismas claves desde el panel de Environment.
+
+Si usas Twilio, las variables `WHATSAPP_*` de Meta pueden quedar vacias. Para el flujo basico de respuesta por TwiML no hace falta `TWILIO_ACCOUNT_SID` ni `TWILIO_AUTH_TOKEN`; Twilio usa la respuesta HTTP del webhook para contestar.
 
 Cuando Render termine el deploy, usa la URL publica para configurar el webhook de Meta:
 

@@ -6,10 +6,13 @@ loadDotEnv();
 export const config = {
   port: numberFromEnv('PORT', 3000),
   whatsapp: {
-    verifyToken: requiredEnv('WHATSAPP_VERIFY_TOKEN'),
-    accessToken: requiredEnv('WHATSAPP_ACCESS_TOKEN'),
-    phoneNumberId: requiredEnv('WHATSAPP_PHONE_NUMBER_ID'),
+    verifyToken: process.env.WHATSAPP_VERIFY_TOKEN || '',
+    accessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
     graphApiVersion: process.env.WHATSAPP_GRAPH_API_VERSION || 'v23.0'
+  },
+  twilio: {
+    authToken: process.env.TWILIO_AUTH_TOKEN || ''
   },
   google: {
     clientId: requiredEnv('GOOGLE_CLIENT_ID'),

@@ -29,6 +29,10 @@ const server = http.createServer(async (request, response) => {
       return handleWhatsAppWebhook(request, response);
     }
 
+    if (request.method === 'POST' && url.pathname === '/webhook/twilio/whatsapp') {
+      return handleTwilioWhatsAppWebhook(request, response);
+    }
+
     sendJson(response, 404, { error: 'Not found' });
   } catch (error) {
     console.error(error);
@@ -89,6 +93,26 @@ async function handleWhatsAppWebhook(request, response) {
   }
 }
 
+async function handleTwilioWhatsAppWebhook(request, response) {
+  const form = await readForm(request);
+  const from = form.get('From') || 'unknown';
+  const body = form.get('Body') || '';
+
+  console.log(`Twilio WhatsApp message received from ${from}: ${body}`);
+
+  try {
+    const reply = await agent.handleMessage(body);
+    sendXml(response, 200, twilioMessageResponse(reply));
+  } catch (error) {
+    console.error('Failed to process Twilio WhatsApp message', error);
+    sendXml(
+      response,
+      200,
+      twilioMessageResponse('Tuve un problema procesando el pedido. Revisa la configuracion del agente o intenta de nuevo.')
+    );
+  }
+}
+
 function logWhatsAppWebhook({ messages, statuses }) {
   if (messages.length === 0 && statuses.length === 0) {
     console.log('WhatsApp webhook received without messages or statuses');
@@ -132,9 +156,49 @@ function readJson(request) {
   });
 }
 
+function readForm(request) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 1_000_000) {
+        request.destroy();
+        reject(new Error('Request body too large'));
+      }
+    });
+    request.on('end', () => {
+      resolve(new URLSearchParams(body));
+    });
+    request.on('error', reject);
+  });
+}
+
 function sendJson(response, statusCode, body) {
   response.writeHead(statusCode, { 'Content-Type': 'application/json' });
   response.end(JSON.stringify(body));
+}
+
+function sendXml(response, statusCode, body) {
+  response.writeHead(statusCode, { 'Content-Type': 'text/xml' });
+  response.end(body);
+}
+
+function twilioMessageResponse(message) {
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<Response>',
+    `<Message>${escapeXml(message)}</Message>`,
+    '</Response>'
+  ].join('');
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
 }
 
 function maskToken(token) {
