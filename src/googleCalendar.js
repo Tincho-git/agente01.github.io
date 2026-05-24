@@ -44,6 +44,12 @@ export class GoogleCalendarClient {
     });
   }
 
+  async deleteEvent(eventId) {
+    return this.request(`/calendars/${encodeURIComponent(this.calendarId)}/events/${encodeURIComponent(eventId)}`, {
+      method: 'DELETE'
+    });
+  }
+
   async request(path, options = {}) {
     const token = await this.getAccessToken();
     const response = await fetch(`${GOOGLE_CALENDAR_URL}${path}`, {
@@ -58,6 +64,10 @@ export class GoogleCalendarClient {
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`Google Calendar API error ${response.status}: ${text}`);
+    }
+
+    if (response.status === 204) {
+      return null;
     }
 
     return response.json();
